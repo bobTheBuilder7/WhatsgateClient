@@ -27,10 +27,10 @@ type Client struct {
 	WhatsappID string
 }
 
-func NewClient(apiKey, whatsappID string) (*Client, error) {
+func NewClient(apiKey, whatsappID string) *Client {
 	httpClient := &http.Client{Transport: &transport{rt: http.DefaultTransport, xApiKey: apiKey}}
 
-	return &Client{httpClient: httpClient, url: "https://whatsgate.ru/api/v1", WhatsappID: whatsappID}, nil
+	return &Client{httpClient: httpClient, url: "https://whatsgate.ru/api/v1", WhatsappID: whatsappID}
 }
 
 type MessageResponse struct {
