@@ -1,1 +1,1 @@
-module whatsgate
+module github.com/bobTheBuilder7/WhatsgateClient
