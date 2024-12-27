@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -101,8 +100,6 @@ func (c *Client) SendMessage(recipientPhone, text string) (MessageResponse, erro
 	if req.StatusCode != http.StatusOK {
 		return MessageResponse{}, errors.New(req.Status)
 	}
-
-	fmt.Println(string(respBody))
 
 	var message MessageResponse
 
