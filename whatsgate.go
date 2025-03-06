@@ -57,6 +57,16 @@ type MessageRequest struct {
 	Message    Message   `json:"message"`
 }
 
+type CheckRequest struct {
+	WhatsappID string `json:"WhatsappID"`
+	Number     string `json:"number"`
+}
+
+type CheckResponse struct {
+	Result string `json:"result"`
+	Data   bool   `json:"data"`
+}
+
 type Recipient struct {
 	Number string `json:"number"`
 }
@@ -118,7 +128,7 @@ func (c *Client) SendMessage(recipientPhone, text string) (MessageResponse, erro
 	}
 
 	if req.StatusCode != http.StatusOK {
-		return MessageResponse{}, errors.New(req.Status)
+		return MessageResponse{}, errors.New("некорректный номер WhatsApp")
 	}
 
 	var message MessageResponse
@@ -186,4 +196,42 @@ func (c *Client) SendPDF(recipientPhone, text, filename string, pdf io.Reader) (
 	}
 
 	return message, nil
+}
+
+func (c *Client) Check(phone string) (bool, error) {
+	body, err := json.Marshal(CheckRequest{
+		WhatsappID: c.WhatsappID,
+		Number:     phone,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	r, err := http.NewRequest("POST", c.url+"/check", bytes.NewBuffer(body))
+	if err != nil {
+		return false, err
+	}
+	r.Close = true
+
+	req, err := c.httpClient.Do(r)
+	if err != nil {
+		slog.Error(err.Error())
+		return false, err
+	}
+
+	if req.StatusCode != http.StatusOK {
+		return false, errors.New(req.Status)
+	}
+
+	defer req.Body.Close()
+
+	var response CheckResponse
+
+	err = json.NewDecoder(req.Body).Decode(&response)
+	if err != nil {
+		slog.Error(err.Error())
+		return false, err
+	}
+
+	return response.Data, nil
 }
