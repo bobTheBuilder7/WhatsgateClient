@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 type transport struct {
@@ -99,7 +100,7 @@ func (c *Client) SendMessage(recipientPhone, text string) (MessageResponse, erro
 	body, err := json.Marshal(MessageRequest{
 		WhatsappID: c.WhatsappID,
 		Async:      false,
-		Recipient:  Recipient{Number: recipientPhone},
+		Recipient:  Recipient{Number: strings.TrimPrefix(recipientPhone, "+")},
 		Message:    Message{Type: "text", Body: text},
 	})
 	if err != nil {
@@ -151,7 +152,7 @@ func (c *Client) SendPDF(recipientPhone, text, filename string, pdf io.Reader) (
 	body, err := json.Marshal(MessagePDFRequest{
 		WhatsappID: c.WhatsappID,
 		Async:      false,
-		Recipient:  Recipient{Number: recipientPhone},
+		Recipient:  Recipient{Number: strings.TrimPrefix(recipientPhone, "+")},
 		Message: MessagePDF{Type: "doc", Body: text, Media: Media{
 			Mimetype: "application/pdf",
 			Data:     base64.StdEncoding.EncodeToString(b),
@@ -198,10 +199,10 @@ func (c *Client) SendPDF(recipientPhone, text, filename string, pdf io.Reader) (
 	return message, nil
 }
 
-func (c *Client) Check(phone string) (bool, error) {
+func (c *Client) Check(recipientPhone string) (bool, error) {
 	body, err := json.Marshal(CheckRequest{
 		WhatsappID: c.WhatsappID,
-		Number:     phone,
+		Number:     strings.TrimPrefix(recipientPhone, "+"),
 	})
 	if err != nil {
 		return false, err
