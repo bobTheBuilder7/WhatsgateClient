@@ -199,6 +199,62 @@ func (c *Client) SendPDF(recipientPhone, text, filename string, pdf io.Reader) (
 	return message, nil
 }
 
+func (c *Client) SendExcel(recipientPhone, text, filename string, excel io.Reader) (MessageResponse, error) {
+	b, err := io.ReadAll(excel)
+	if err != nil {
+		return MessageResponse{}, err
+	}
+
+	body, err := json.Marshal(MessagePDFRequest{
+		WhatsappID: c.WhatsappID,
+		Async:      false,
+		Recipient:  Recipient{Number: strings.TrimPrefix(recipientPhone, "+")},
+		Message: MessagePDF{Type: "doc", Body: text, Media: Media{
+			Mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n",
+			Data:     base64.StdEncoding.EncodeToString(b),
+			Filename: filename,
+		}},
+	})
+	if err != nil {
+		return MessageResponse{}, err
+	}
+
+	r, err := http.NewRequest("POST", c.url+"/send", bytes.NewBuffer(body))
+	if err != nil {
+		slog.Error(err.Error())
+		return MessageResponse{}, err
+	}
+	r.Close = true
+
+	req, err := c.httpClient.Do(r)
+	if err != nil {
+		slog.Error(err.Error())
+		return MessageResponse{}, err
+	}
+
+	defer req.Body.Close()
+
+	respBody, err := io.ReadAll(req.Body)
+	if err != nil {
+		slog.Error(err.Error())
+		return MessageResponse{}, err
+	}
+
+	if req.StatusCode != http.StatusOK {
+		return MessageResponse{}, errors.New(req.Status)
+	}
+
+	var message MessageResponse
+
+	err = json.Unmarshal(respBody, &message)
+	if err != nil {
+		slog.Error(err.Error())
+		return MessageResponse{}, err
+	}
+
+	return message, nil
+}
+
 func (c *Client) Check(recipientPhone string) (bool, error) {
 	body, err := json.Marshal(CheckRequest{
 		WhatsappID: c.WhatsappID,
