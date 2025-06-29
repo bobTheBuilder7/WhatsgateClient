@@ -129,6 +129,11 @@ func (c *Client) SendMessage(recipientPhone, text string) (MessageResponse, erro
 	}
 
 	if req.StatusCode != http.StatusOK {
+
+		if strings.Contains(string(respBody), "Evaluation failed: TypeError: Cannot read properties of undefined (reading 'serialize')") {
+			return MessageResponse{}, nil
+		}
+
 		return MessageResponse{}, errors.New("некорректный номер WhatsApp")
 	}
 
@@ -210,7 +215,7 @@ func (c *Client) SendExcel(recipientPhone, text, filename string, excel io.Reade
 		Async:      false,
 		Recipient:  Recipient{Number: strings.TrimPrefix(recipientPhone, "+")},
 		Message: MessagePDF{Type: "doc", Body: text, Media: Media{
-			Mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n",
+			Mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 			Data:     base64.StdEncoding.EncodeToString(b),
 			Filename: filename,
 		}},
