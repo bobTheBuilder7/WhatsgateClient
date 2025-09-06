@@ -2,6 +2,7 @@ package whatsgate
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -29,6 +30,7 @@ type Client struct {
 }
 
 func NewClient(apiKey, whatsappID string) *Client {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	httpClient := &http.Client{Transport: &transport{rt: http.DefaultTransport, xApiKey: apiKey}}
 
 	return &Client{httpClient: httpClient, url: "https://whatsgate.ru/api/v1", WhatsappID: whatsappID}
