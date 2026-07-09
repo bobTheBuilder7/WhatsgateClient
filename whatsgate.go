@@ -35,22 +35,22 @@ func NewClient(apiKey, whatsappID string) *Client {
 	return &Client{httpClient: httpClient, url: "https://whatsgate.sldent.am/api/v1", WhatsappID: whatsappID}
 }
 
-type MessageResponse struct {
-	Result struct {
-		Id          string `json:"_id"`
-		Id1         string `json:"id"`
-		Ack         int    `json:"ack"`
-		HasMedia    bool   `json:"hasMedia"`
-		MediaKey    string `json:"mediaKey"`
-		Body        string `json:"body"`
-		Type        string `json:"type"`
-		Timestamp   int    `json:"timestamp"`
-		From        string `json:"from"`
-		FromName    string `json:"from_name"`
-		To          string `json:"to"`
-		IsForwarded bool   `json:"isForwarded"`
-	} `json:"result"`
-}
+// type MessageResponse struct {
+// 	Result struct {
+// 		Id          string `json:"_id"`
+// 		Id1         string `json:"id"`
+// 		Ack         int    `json:"ack"`
+// 		HasMedia    bool   `json:"hasMedia"`
+// 		MediaKey    string `json:"mediaKey"`
+// 		Body        string `json:"body"`
+// 		Type        string `json:"type"`
+// 		Timestamp   int    `json:"timestamp"`
+// 		From        string `json:"from"`
+// 		FromName    string `json:"from_name"`
+// 		To          string `json:"to"`
+// 		IsForwarded bool   `json:"isForwarded"`
+// 	} `json:"result"`
+// }
 
 type MessageRequest struct {
 	WhatsappID string    `json:"WhatsappID"`
@@ -97,7 +97,7 @@ type MessagePDFRequest struct {
 	Message    MessagePDF `json:"message"`
 }
 
-func (c *Client) SendMessage(recipientPhone, text string) (MessageResponse, error) {
+func (c *Client) SendMessage(recipientPhone, text string) error {
 	body, err := json.Marshal(MessageRequest{
 		WhatsappID: c.WhatsappID,
 		Async:      false,
@@ -105,48 +105,31 @@ func (c *Client) SendMessage(recipientPhone, text string) (MessageResponse, erro
 		Message:    Message{Type: "text", Body: text},
 	})
 	if err != nil {
-		return MessageResponse{}, err
+		return err
 	}
 
 	r, err := http.NewRequest("POST", c.url+"/send", bytes.NewBuffer(body))
 	if err != nil {
 		slog.Error(err.Error())
-		return MessageResponse{}, err
+		return err
 	}
 	r.Close = true
 
 	req, err := c.httpClient.Do(r)
 	if err != nil {
 		slog.Error(err.Error())
-		return MessageResponse{}, err
+		return err
 	}
 
 	defer req.Body.Close()
 
-	respBody, err := io.ReadAll(req.Body)
-	if err != nil {
-		slog.Error(err.Error())
-		return MessageResponse{}, err
-	}
+	io.Copy(io.Discard, req.Body)
 
 	if req.StatusCode != http.StatusOK {
-
-		if strings.Contains(string(respBody), "Evaluation failed: TypeError: Cannot read properties of undefined (reading 'serialize')") {
-			return MessageResponse{}, nil
-		}
-
-		return MessageResponse{}, errors.New("некорректный номер WhatsApp")
+		return errors.New("некорректный номер WhatsApp")
 	}
 
-	var message MessageResponse
-
-	err = json.Unmarshal(respBody, &message)
-	if err != nil {
-		slog.Error(err.Error())
-		return MessageResponse{}, err
-	}
-
-	return message, nil
+	return nil
 }
 
 // func (c *Client) SendPDF(recipientPhone, text, filename string, pdf io.Reader) (MessageResponse, error) {
