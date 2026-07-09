@@ -3,7 +3,6 @@ package whatsgate
 import (
 	"bytes"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io"
@@ -150,114 +149,114 @@ func (c *Client) SendMessage(recipientPhone, text string) (MessageResponse, erro
 	return message, nil
 }
 
-func (c *Client) SendPDF(recipientPhone, text, filename string, pdf io.Reader) (MessageResponse, error) {
-	b, err := io.ReadAll(pdf)
-	if err != nil {
-		return MessageResponse{}, err
-	}
+// func (c *Client) SendPDF(recipientPhone, text, filename string, pdf io.Reader) (MessageResponse, error) {
+// 	b, err := io.ReadAll(pdf)
+// 	if err != nil {
+// 		return MessageResponse{}, err
+// 	}
 
-	body, err := json.Marshal(MessagePDFRequest{
-		WhatsappID: c.WhatsappID,
-		Async:      false,
-		Recipient:  Recipient{Number: strings.TrimPrefix(recipientPhone, "+")},
-		Message: MessagePDF{Type: "doc", Body: text, Media: Media{
-			Mimetype: "application/pdf",
-			Data:     base64.StdEncoding.EncodeToString(b),
-			Filename: filename,
-		}},
-	})
-	if err != nil {
-		return MessageResponse{}, err
-	}
+// 	body, err := json.Marshal(MessagePDFRequest{
+// 		WhatsappID: c.WhatsappID,
+// 		Async:      false,
+// 		Recipient:  Recipient{Number: strings.TrimPrefix(recipientPhone, "+")},
+// 		Message: MessagePDF{Type: "doc", Body: text, Media: Media{
+// 			Mimetype: "application/pdf",
+// 			Data:     base64.StdEncoding.EncodeToString(b),
+// 			Filename: filename,
+// 		}},
+// 	})
+// 	if err != nil {
+// 		return MessageResponse{}, err
+// 	}
 
-	r, err := http.NewRequest("POST", c.url+"/send", bytes.NewBuffer(body))
-	if err != nil {
-		slog.Error(err.Error())
-		return MessageResponse{}, err
-	}
-	r.Close = true
+// 	r, err := http.NewRequest("POST", c.url+"/send", bytes.NewBuffer(body))
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		return MessageResponse{}, err
+// 	}
+// 	r.Close = true
 
-	req, err := c.httpClient.Do(r)
-	if err != nil {
-		slog.Error(err.Error())
-		return MessageResponse{}, err
-	}
+// 	req, err := c.httpClient.Do(r)
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		return MessageResponse{}, err
+// 	}
 
-	defer req.Body.Close()
+// 	defer req.Body.Close()
 
-	respBody, err := io.ReadAll(req.Body)
-	if err != nil {
-		slog.Error(err.Error())
-		return MessageResponse{}, err
-	}
+// 	respBody, err := io.ReadAll(req.Body)
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		return MessageResponse{}, err
+// 	}
 
-	if req.StatusCode != http.StatusOK {
-		return MessageResponse{}, errors.New(req.Status)
-	}
+// 	if req.StatusCode != http.StatusOK {
+// 		return MessageResponse{}, errors.New(req.Status)
+// 	}
 
-	var message MessageResponse
+// 	var message MessageResponse
 
-	err = json.Unmarshal(respBody, &message)
-	if err != nil {
-		slog.Error(err.Error())
-		return MessageResponse{}, err
-	}
+// 	err = json.Unmarshal(respBody, &message)
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		return MessageResponse{}, err
+// 	}
 
-	return message, nil
-}
+// 	return message, nil
+// }
 
-func (c *Client) SendExcel(recipientPhone, text, filename string, excel io.Reader) (MessageResponse, error) {
-	b, err := io.ReadAll(excel)
-	if err != nil {
-		return MessageResponse{}, err
-	}
+// func (c *Client) SendExcel(recipientPhone, text, filename string, excel io.Reader) (MessageResponse, error) {
+// 	b, err := io.ReadAll(excel)
+// 	if err != nil {
+// 		return MessageResponse{}, err
+// 	}
 
-	body, err := json.Marshal(MessagePDFRequest{
-		WhatsappID: c.WhatsappID,
-		Async:      false,
-		Recipient:  Recipient{Number: strings.TrimPrefix(recipientPhone, "+")},
-		Message: MessagePDF{Type: "doc", Body: text, Media: Media{
-			Mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-			Data:     base64.StdEncoding.EncodeToString(b),
-			Filename: filename,
-		}},
-	})
-	if err != nil {
-		return MessageResponse{}, err
-	}
+// 	body, err := json.Marshal(MessagePDFRequest{
+// 		WhatsappID: c.WhatsappID,
+// 		Async:      false,
+// 		Recipient:  Recipient{Number: strings.TrimPrefix(recipientPhone, "+")},
+// 		Message: MessagePDF{Type: "doc", Body: text, Media: Media{
+// 			Mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+// 			Data:     base64.StdEncoding.EncodeToString(b),
+// 			Filename: filename,
+// 		}},
+// 	})
+// 	if err != nil {
+// 		return MessageResponse{}, err
+// 	}
 
-	r, err := http.NewRequest("POST", c.url+"/send", bytes.NewBuffer(body))
-	if err != nil {
-		slog.Error(err.Error())
-		return MessageResponse{}, err
-	}
-	r.Close = true
+// 	r, err := http.NewRequest("POST", c.url+"/send", bytes.NewBuffer(body))
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		return MessageResponse{}, err
+// 	}
+// 	r.Close = true
 
-	req, err := c.httpClient.Do(r)
-	if err != nil {
-		slog.Error(err.Error())
-		return MessageResponse{}, err
-	}
+// 	req, err := c.httpClient.Do(r)
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		return MessageResponse{}, err
+// 	}
 
-	defer req.Body.Close()
+// 	defer req.Body.Close()
 
-	respBody, err := io.ReadAll(req.Body)
-	if err != nil {
-		slog.Error(err.Error())
-		return MessageResponse{}, err
-	}
+// 	respBody, err := io.ReadAll(req.Body)
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		return MessageResponse{}, err
+// 	}
 
-	if req.StatusCode != http.StatusOK {
-		return MessageResponse{}, errors.New(req.Status)
-	}
+// 	if req.StatusCode != http.StatusOK {
+// 		return MessageResponse{}, errors.New(req.Status)
+// 	}
 
-	var message MessageResponse
+// 	var message MessageResponse
 
-	err = json.Unmarshal(respBody, &message)
-	if err != nil {
-		slog.Error(err.Error())
-		return MessageResponse{}, err
-	}
+// 	err = json.Unmarshal(respBody, &message)
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		return MessageResponse{}, err
+// 	}
 
-	return message, nil
-}
+// 	return message, nil
+// }
