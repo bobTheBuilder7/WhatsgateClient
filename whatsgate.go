@@ -33,7 +33,7 @@ func NewClient(apiKey, whatsappID string) *Client {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	httpClient := &http.Client{Transport: &transport{rt: http.DefaultTransport, xApiKey: apiKey}}
 
-	return &Client{httpClient: httpClient, url: "https://whatsgate.ru/api/v1", WhatsappID: whatsappID}
+	return &Client{httpClient: httpClient, url: "https://whatsgate.sldent.am/api/v1", WhatsappID: whatsappID}
 }
 
 type MessageResponse struct {
@@ -260,42 +260,4 @@ func (c *Client) SendExcel(recipientPhone, text, filename string, excel io.Reade
 	}
 
 	return message, nil
-}
-
-func (c *Client) Check(recipientPhone string) (bool, error) {
-	body, err := json.Marshal(CheckRequest{
-		WhatsappID: c.WhatsappID,
-		Number:     strings.TrimPrefix(recipientPhone, "+"),
-	})
-	if err != nil {
-		return false, err
-	}
-
-	r, err := http.NewRequest("POST", c.url+"/check", bytes.NewBuffer(body))
-	if err != nil {
-		return false, err
-	}
-	r.Close = true
-
-	req, err := c.httpClient.Do(r)
-	if err != nil {
-		slog.Error(err.Error())
-		return false, err
-	}
-
-	if req.StatusCode != http.StatusOK {
-		return false, errors.New(req.Status)
-	}
-
-	defer req.Body.Close()
-
-	var response CheckResponse
-
-	err = json.NewDecoder(req.Body).Decode(&response)
-	if err != nil {
-		slog.Error(err.Error())
-		return false, err
-	}
-
-	return response.Data, nil
 }
